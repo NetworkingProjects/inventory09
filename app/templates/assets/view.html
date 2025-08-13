@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+{% block title %}Asset {{ a.invoice_no }}{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+  <div class="bg-white rounded shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold">Asset: {{ a.invoice_no or a.serial_number }}</h1>
+      <div>
+        {% if current_user.role == 'superadmin' %}
+        <a href="{{ url_for('assets.edit', id=a.id) }}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+          Edit
+        </a>
+        {% endif %}
+        <a href="{{ url_for('assets.dashboard') }}" class="ml-3 text-sm text-blue-600 hover:text-blue-800">Back</a></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-gray-50 rounded p-4"><h3 class="font-medium mb-2">Identification</h3>
+        <p><span class="text-gray-500 text-sm">Invoice No:</span> {{ a.invoice_no or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Invoice Date:</span> {{ a.invoice_date or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Serial Number:</span> {{ a.serial_number or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">PO No:</span> {{ a.purchase_order_no or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Entry No:</span> {{ a.entry_no or '-' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded p-4"><h3 class="font-medium mb-2">Ownership & Assignment</h3>
+        <p><span class="text-gray-500 text-sm">Owner Email:</span> {{ a.owner_email or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Team:</span> {{ a.team or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Recipient:</span> {% if a.recipient_name %}{{ a.recipient_name }} ({{ a.recipient_email }}){% else %}-{% endif %}</p>
+        <p><span class="text-gray-500 text-sm">Location:</span> {{ a.location or '-' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded p-4"><h3 class="font-medium mb-2">Equipment</h3>
+        <p><span class="text-gray-500 text-sm">Manufacturer:</span> {{ a.manufacturer or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Model:</span> {{ a.model or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Vendor:</span> {{ a.vendor or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Mfg Country:</span> {{ a.mfg_country or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">HSN Code:</span> {{ a.hsn_code or '-' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded p-4"><h3 class="font-medium mb-2">Classification & Calibration</h3>
+        <p><span class="text-gray-500 text-sm">Bonded:</span> {{ a.is_bonded or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Returnable:</span> {{ a.returnable_no or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Cap X:</span> {{ a.cap_x or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Amortization Period:</span> {{ a.amortization_period or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Last Calibrated:</span> {{ a.last_calibrated or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Next Calibration:</span> {{ a.next_calibration or '-' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded p-4 md:col-span-2"><h3 class="font-medium mb-2">Description & Notes</h3>
+        <p><span class="text-gray-500 text-sm">Description:</span> {{ a.description or '-' }}</p>
+        <p><span class="text-gray-500 text-sm">Notes:</span> {{ a.notes or '-' }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

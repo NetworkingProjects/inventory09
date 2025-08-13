@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Add - Masters{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+  <div class="bg-white rounded shadow p-6">
+    <!-- CSRF for fetch -->
+    <input type="hidden" id="csrf_token_master" value="{{ csrf_token() }}">
+
+    <div class="border-b mb-4">
+      <nav class="-mb-px flex flex-wrap gap-4 text-sm">
+        <a href="{{ url_for('masters.index', tab='team') }}" class="pb-2 {% if tab=='team' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Team</a>
+        <a href="{{ url_for('masters.index', tab='recipient') }}" class="pb-2 {% if tab=='recipient' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Recipient Details</a>
+        <a href="{{ url_for('masters.index', tab='category') }}" class="pb-2 {% if tab=='category' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Category/Sub Category</a>
+        <a href="{{ url_for('masters.index', tab='manufacturer') }}" class="pb-2 {% if tab=='manufacturer' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Manufacturer</a>
+        <a href="{{ url_for('masters.index', tab='vendor') }}" class="pb-2 {% if tab=='vendor' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Vendor</a>
+        <a href="{{ url_for('masters.index', tab='location') }}" class="pb-2 {% if tab=='location' %}border-b-2 border-blue-600 text-blue-700{% else %}text-gray-600{% endif %}">Location</a>
+      </nav>
+    </div>
+
+    {% if tab=='team' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="team">
+          <input id="team_name" placeholder="Team name" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Team</button>
+        </form>
+        <ul class="list-disc pl-5 space-y-1">
+          {% for t in teams %}
+          <li>
+            <span data-label>{{ t.name }}</span>
+            <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="team" data-id="{{ t.id }}">Edit</button>
+            <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="team" data-id="{{ t.id }}">Delete</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    {% elif tab=='recipient' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="recipient">
+          <input id="recipient_name" placeholder="Name" class="border rounded px-3 py-2" required>
+          <input id="recipient_email" type="email" placeholder="Email" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Recipient</button>
+        </form>
+        <ul class="space-y-1">
+          {% for r in recips %}
+          <li>
+            <span data-name class="font-medium">{{ r.name }}</span>
+            <span data-email class="text-gray-500">({{ r.email }})</span>
+            <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit-recipient" data-id="{{ r.id }}">Edit</button>
+            <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="recipient" data-id="{{ r.id }}">Delete</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    {% elif tab=='category' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="category">
+          <input id="category_name" placeholder="Category name" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Category</button>
+        </form>
+        <div>
+          <ul class="list-disc pl-5">
+            {% for c in cats %}
+            <li class="mb-2">
+              <div>
+                <span data-label>{{ c.name }}</span>
+                <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="category" data-id="{{ c.id }}">Edit</button>
+                <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="category" data-id="{{ c.id }}">Delete</button>
+              </div>
+              <form class="flex gap-2 items-center ml-4 mt-1 js-add-sub" data-category-id="{{ c.id }}">
+                <input class="border rounded px-2 py-1 text-sm" placeholder="Add subcategory" required name="sub_name" id="sub_for_{{ c.id }}"/>
+                <button type="submit" class="px-2 py-1 text-sm border rounded hover:bg-gray-50">Add</button>
+              </form>
+              <ul class="text-sm text-gray-700 list-disc pl-5 mt-1">
+                {% for s in c.subcategories %}
+                <li>
+                  <span data-label>{{ s.name }}</span>
+                  <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="subcategory" data-id="{{ s.id }}">Edit</button>
+                  <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="subcategory" data-id="{{ s.id }}">Delete</button>
+                </li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+    {% elif tab=='manufacturer' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="manufacturer">
+          <input id="manufacturer_name" placeholder="Manufacturer name" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Manufacturer</button>
+        </form>
+        <ul class="list-disc pl-5">
+          {% for m in mans %}
+          <li>
+            <span data-label>{{ m.name }}</span>
+            <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="manufacturer" data-id="{{ m.id }}">Edit</button>
+            <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="manufacturer" data-id="{{ m.id }}">Delete</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    {% elif tab=='vendor' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="vendor">
+          <input id="vendor_name" placeholder="Vendor name" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Vendor</button>
+        </form>
+        <ul class="list-disc pl-5">
+          {% for v in vendors %}
+          <li>
+            <span data-label>{{ v.name }}</span>
+            <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="vendor" data-id="{{ v.id }}">Edit</button>
+            <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="vendor" data-id="{{ v.id }}">Delete</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    {% elif tab=='location' %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form class="space-y-2 js-add-form" data-kind="location">
+          <input id="location_name" placeholder="Location" class="border rounded px-3 py-2" required>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Add Location</button>
+        </form>
+        <ul class="list-disc pl-5">
+          {% for l in locs %}
+          <li>
+            <span data-label>{{ l.name }}</span>
+            <button type="button" class="text-xs text-blue-600 ml-2" data-action="edit" data-kind="location" data-id="{{ l.id }}">Edit</button>
+            <button type="button" class="text-xs text-red-600 ml-1" data-action="delete" data-kind="location" data-id="{{ l.id }}">Delete</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- helpers ----
+  function toast(msg, ok=true){
+    const d=document.createElement('div'); d.setAttribute('data-flash','');
+    d.className='fixed top-4 right-4 bg-white border '+(ok?'border-green-300 text-green-800':'border-red-300 text-red-800')+' rounded shadow px-4 py-2 text-sm z-50';
+    d.textContent=msg; document.body.appendChild(d);
+    setTimeout(()=>{d.style.transition='opacity .4s'; d.style.opacity='0'; setTimeout(()=>d.remove(),500)}, 2000);
+  }
+  function apiHeaders(){
+    const h={'Content-Type':'application/json'};
+    const t=document.getElementById('csrf_token_master')?.value;
+    if(t){ h['X-CSRFToken']=t; }
+    return h;
+  }
+  function apiFetch(url, options){
+    return fetch(url, Object.assign({credentials:'same-origin'}, options));
+  }
+
+  // ---- ADD handlers (team/vendor/…/category/recipient) ----
+  document.querySelectorAll('.js-add-form').forEach(form=>{
+    form.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const kind=form.dataset.kind;
+      let url='', payload={};
+      try{
+        switch(kind){
+          case 'team':
+            url="{{ url_for('masters.api_add_team') }}";
+            payload={name: document.getElementById('team_name').value};
+            break;
+          case 'manufacturer':
+            url="{{ url_for('masters.api_add_manufacturer') }}";
+            payload={name: document.getElementById('manufacturer_name').value};
+            break;
+          case 'vendor':
+            url="{{ url_for('masters.api_add_vendor') }}";
+            payload={name: document.getElementById('vendor_name').value};
+            break;
+          case 'location':
+            url="{{ url_for('masters.api_add_location') }}";
+            payload={name: document.getElementById('location_name').value};
+            break;
+          case 'recipient':
+            url="{{ url_for('masters.api_add_recipient') }}";
+            payload={
+              name: document.getElementById('recipient_name').value,
+              email: document.getElementById('recipient_email').value
+            };
+            break;
+          case 'category':
+            url="{{ url_for('masters.api_add_category') }}";
+            payload={name: document.getElementById('category_name').value};
+            break;
+          default:
+            toast('Unknown kind', false); return;
+        }
+        const res=await apiFetch(url,{method:'POST', headers:apiHeaders(), body:JSON.stringify(payload)});
+        if(!res.ok){ let j={}; try{ j=await res.json(); }catch(e){}; return toast(j.error||('Failed ('+res.status+')'), false); }
+        toast('Added'); location.reload();
+      }catch(e){ toast('Failed', false); }
+    });
+  });
+
+  // ---- Add Subcategory forms ----
+  document.querySelectorAll('form.js-add-sub').forEach(form=>{
+    form.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const catId=form.dataset.categoryId;
+      const inp=form.querySelector('input[name="sub_name"]');
+      const res=await apiFetch("{{ url_for('masters.api_add_subcategory') }}",
+        {method:'POST', headers:apiHeaders(), body:JSON.stringify({category_id:catId, name:inp.value})});
+      if(res.ok){ toast('Subcategory added'); location.reload(); }
+      else { let j={}; try{ j=await res.json(); }catch(e){}; toast(j.error||'Failed', false); }
+    });
+  });
+
+  // ---- Edit/Delete via event delegation on the container ----
+  document.addEventListener('click', async (ev)=>{
+    const btn = ev.target.closest('button[data-action]');
+    if(!btn) return;
+    const action = btn.dataset.action;
+
+    if(action === 'delete'){
+      const kind=btn.dataset.kind, id=btn.dataset.id;
+      if(!confirm('Delete this item?')) return;
+      const url=`{{ url_for('masters.api_delete', kind='__k__', item_id=0) }}`.replace('__k__', kind).replace('/0','/'+id);
+      const res=await apiFetch(url,{method:'DELETE', headers:apiHeaders()});
+      if(res.ok){ toast('Deleted'); location.reload(); } else { toast('Delete failed', false); }
+      return;
+    }
+
+    if(action === 'edit'){
+      const kind=btn.dataset.kind, id=btn.dataset.id;
+      // Get current label text to prefill
+      const li=btn.closest('li'); const span=li?.querySelector('[data-label]');
+      const current=(span?.textContent||'').trim();
+      const name=prompt('Update name', current);
+      if(!name || name===current) return;
+      const url=`{{ url_for('masters.api_update', kind='__k__', item_id=0) }}`.replace('__k__', kind).replace('/0','/'+id);
+      const res=await apiFetch(url,{method:'POST', headers:apiHeaders(), body:JSON.stringify({name})});
+      if(res.ok){ if(span) span.textContent=name; toast('Updated'); } else { toast('Update failed', false); }
+      return;
+    }
+
+    if(action === 'edit-recipient'){
+      const id=btn.dataset.id;
+      const li=btn.closest('li'); const sn=li.querySelector('[data-name]'); const se=li.querySelector('[data-email]');
+      const currentN=sn.textContent.trim(); const currentE=se.textContent.replace(/[()]/g,'').trim();
+      const name=prompt('Name', currentN); if(name===null) return;
+      const email=prompt('Email', currentE); if(email===null) return;
+      const url=`{{ url_for('masters.api_update', kind='recipient', item_id=0) }}`.replace('/0','/'+id);
+      const res=await apiFetch(url,{method:'POST', headers:apiHeaders(), body:JSON.stringify({name, email})});
+      if(res.ok){ sn.textContent=name; se.textContent='('+email+')'; toast('Updated'); } else { toast('Update failed', false); }
+    }
+  });
+})();
+</script>
+{% endblock %}

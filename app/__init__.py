@@ -1,47 +1,36 @@
+
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from config import config
+from .extensions import db, migrate, login_manager, csrf
+from .config import Config
+from .models import seed_defaults
 
-db = SQLAlchemy()
-login_manager = LoginManager()
+def create_app():
+    app = Flask(__name__, template_folder="templates", static_folder="static")
+    app.config.from_object(Config)
 
-def create_app(config_name='default'):
-    app = Flask(__name__)
-    app.config.from_object(config[config_name])
-    
-    # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Please log in to access this page.'
-    login_manager.login_message_category = 'info'
-    
-    # Register blueprints
-    from app.routes import auth_bp, inventory_bp, api_bp
-    from app.routes.bulk import bulk_bp
-    from app.routes.analytics import analytics_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(inventory_bp, url_prefix='/')
-    app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(bulk_bp, url_prefix='/bulk')
-    app.register_blueprint(analytics_bp, url_prefix='/analytics')
-    
-    # Create database tables
+    csrf.init_app(app)
+    login_manager.login_view = "auth.login"
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        from .models import User
+        try:
+            return User.query.get(int(user_id))
+        except Exception:
+            return None
+
+    from .routes.auth import auth_bp
+    from .routes.assets import assets_bp
+    from .routes.masters import masters_bp
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(assets_bp)
+    app.register_blueprint(masters_bp)
+
     with app.app_context():
         db.create_all()
-        
-        # Create default admin user if not exists
-        from app.models import User
-        admin_user = User.query.filter_by(email='admin@lab.com').first()
-        if not admin_user:
-            admin_user = User(
-                name='Lab Administrator',
-                email='admin@lab.com',
-                role='Admin'
-            )
-            admin_user.set_password('admin123')
-            db.session.add(admin_user)
-            db.session.commit()
-    
+        seed_defaults()
+
     return app

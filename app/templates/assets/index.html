@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4">
+  <div class="flex items-center justify-between mb-6">
+    <div><h1 class="text-2xl font-bold text-gray-900">Equipment Inventory</h1><p class="text-gray-600">Manage and track equipment</p></div>
+    {% if can_create %}
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('assets.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">Add Equipment</a>
+      <a href="{{ url_for('assets.import_page') }}" class="px-3 py-2 border rounded-md text-sm hover:bg-gray-50">Import</a>
+      <div class="relative">
+        <button id="exportBtn" class="px-3 py-2 border rounded-md text-sm hover:bg-gray-50">Export ▾</button>
+        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg">
+          <a href="{{ url_for('assets.export_excel') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Export as Excel</a>
+          <a href="{{ url_for('assets.export_csv') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Export as CSV</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <form method="get" action="{{ url_for('assets.dashboard') }}" id="filtersForm" class="bg-white rounded shadow mb-6">
+    <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div><label class="block text-sm text-gray-700 mb-1">Search</label><input name="q" value="{{ q }}" placeholder="Invoice, serial, model..." class="w-full border rounded px-3 py-2"></div>
+      <div><label class="block text-sm text-gray-700 mb-1">Category</label><select name="category" class="w-full border rounded px-3 py-2"><option value="">All</option>{% for c in categories %}<option value="{{ c }}" {% if request.args.get('category','')==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm text-gray-700 mb-1">Location</label><select name="location" class="w-full border rounded px-3 py-2"><option value="">All</option>{% for l in locations %}<option value="{{ l }}" {% if request.args.get('location','')==l %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    </div>
+  </form>
+
+  <div class="bg-white rounded shadow overflow-hidden custom-scrollbar">
+    {% include 'assets/table.html' %}
+  </div>
+
+</div>
+<script>
+(function(){
+  const f=document.getElementById('filtersForm'); const inputs=f.querySelectorAll('input,select'); let t=null;
+  inputs.forEach(el=>{ el.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(()=> f.submit(), 400); }); el.addEventListener('change', ()=> f.submit()); });
+  const btn=document.getElementById('exportBtn'), menu=document.getElementById('exportMenu');
+  if(btn && menu){ btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.classList.toggle('hidden'); }); document.addEventListener('click', ()=> menu.classList.add('hidden')); }
+})();
+</script>
+{% endblock %}

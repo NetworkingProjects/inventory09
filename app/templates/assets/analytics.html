@@ -1,0 +1,15 @@
+
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4">
+  <div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold">Analytics</h1><p class="text-gray-600">Overview of assets</p></div><a href="{{ url_for('assets.dashboard') }}" class="text-sm text-blue-600 hover:text-blue-800">← Back</a></div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded shadow p-6"><h3 class="font-medium mb-3">By Category</h3><canvas id="chartCategory"></canvas></div>
+    <div class="bg-white rounded shadow p-6"><h3 class="font-medium mb-3">By Location</h3><canvas id="chartLocation"></canvas></div>
+    <div class="bg-white rounded shadow p-6"><h3 class="font-medium mb-3">Calibration Status</h3><canvas id="chartCalibration"></canvas></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>(async()=>{const r=await fetch("{{ url_for('assets.analytics_json') }}");const d=await r.json();new Chart(document.getElementById('chartCategory'),{type:'doughnut',data:{labels:d.by_category.map(x=>x.label),datasets:[{data:d.by_category.map(x=>x.value)}]}});new Chart(document.getElementById('chartLocation'),{type:'bar',data:{labels:d.by_location.map(x=>x.label),datasets:[{data:d.by_location.map(x=>x.value)}]},options:{scales:{y:{beginAtZero:true}}}});new Chart(document.getElementById('chartCalibration'),{type:'pie',data:{labels:d.calibration.map(x=>x.label),datasets:[{data:d.calibration.map(x=>x.value)}]}});})();</script>
+{% endblock %}

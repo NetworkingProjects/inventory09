@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add' if mode=='create' else 'Edit' }} Equipment{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+  <div class="bg-white rounded shadow p-6">
+    <h1 class="text-xl font-semibold mb-4">{{ 'Add' if mode=='create' else 'Edit' }} Equipment</h1>
+
+    <!-- CSRF for JS fetch -->
+    <input type="hidden" id="csrf_token_assets_form" value="{{ csrf_token() }}">
+
+    <form method="post">
+      {{ form.csrf_token }}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm mb-1">{{ form.invoice_no.label }}</label>
+          {{ form.invoice_no(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.invoice_date.label }}</label>
+          {{ form.invoice_date(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.entry_no.label }}</label>
+          {{ form.entry_no(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.serial_number.label }}</label>
+          {{ form.serial_number(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.purchase_order_no.label }}</label>
+          {{ form.purchase_order_no(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.received_date.label }}</label>
+          {{ form.received_date(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="block text-sm mb-1">{{ form.owner_email.label }}</label>
+          {{ form.owner_email(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <!-- Team + inline add -->
+        <div>
+          <label class="block text-sm mb-1">{{ form.team.label }}</label>
+          {{ form.team(class_="w-full border rounded px-3 py-2", id="team") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('team')">+ Add new team</button>
+        </div>
+
+        <!-- Recipient (dropdown shows Name big, email small) -->
+        <div>
+          <label class="block text-sm mb-1">Recipient Details</label>
+          <select id="recipient_select" class="w-full border rounded px-3 py-2">
+            <option value="">-- None --</option>
+            {% for r in recips %}
+              <option value="{{ r.name }}|{{ r.email }}"
+                {% if form.recipient_name.data==r.name and form.recipient_email.data==r.email %}selected{% endif %}>
+                {{ r.name }} ({{ r.email }})
+              </option>
+            {% endfor %}
+          </select>
+          {{ form.recipient_name(id="recipient_name", class_="hidden") }}
+          {{ form.recipient_email(id="recipient_email", class_="hidden") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('recipient')">+ Add recipient</button>
+        </div>
+
+        <!-- Manufacturer / Model / Vendor with inline add -->
+        <div>
+          <label class="block text-sm mb-1">{{ form.manufacturer.label }}</label>
+          {{ form.manufacturer(class_="w-full border rounded px-3 py-2", id="manufacturer") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('manufacturer')">+ Add new manufacturer</button>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.model.label }}</label>
+          {{ form.model(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.vendor.label }}</label>
+          {{ form.vendor(class_="w-full border rounded px-3 py-2", id="vendor") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('vendor')">+ Add new vendor</button>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.mfg_country.label }}</label>
+          {{ form.mfg_country(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.hsn_code.label }}</label>
+          {{ form.hsn_code(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.is_bonded.label }}</label>
+          {{ form.is_bonded(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.last_calibrated.label }}</label>
+          {{ form.last_calibrated(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.next_calibration.label }}</label>
+          {{ form.next_calibration(class_="w-full border rounded px-3 py-2") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.returnable_no.label }}</label>
+          {{ form.returnable_no(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.cap_x.label }}</label>
+          {{ form.cap_x(class_="w-full border rounded px-3 py-2", id="cap_x") }}
+        </div>
+        <div>
+          <label class="block text-sm mb-1">{{ form.amortization_period.label }}</label>
+          {{ form.amortization_period(class_="w-full border rounded px-3 py-2", id="amortization_period") }}
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.location.label }}</label>
+          {{ form.location(class_="w-full border rounded px-3 py-2", id="location") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('location')">+ Add new location</button>
+        </div>
+
+        <!-- Category/Sub with dynamic subcat fetch and inline add -->
+        <div>
+          <label class="block text-sm mb-1">{{ form.category.label }}</label>
+          {{ form.category(class_="w-full border rounded px-3 py-2", id="category") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('category')">+ Add new category</button>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">{{ form.sub_category.label }}</label>
+          {{ form.sub_category(class_="w-full border rounded px-3 py-2", id="sub_category") }}
+          <button type="button" class="mt-1 text-xs text-blue-600" onclick="openAdd('subcategory')">+ Add new sub category</button>
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="block text-sm mb-1">{{ form.description.label }}</label>
+          {{ form.description(class_="w-full border rounded px-3 py-2") }}
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="block text-sm mb-1">{{ form.notes.label }}</label>
+          {{ form.notes(class_="w-full border rounded px-3 py-2") }}
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">
+          {{ 'Create' if mode=='create' else 'Update' }}
+        </button>
+        <a href="{{ url_for('assets.dashboard') }}" class="ml-2 text-sm text-gray-600 hover:text-gray-900">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal for inline add -->
+<div id="addModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow p-5 w-full max-w-sm">
+    <h3 class="font-medium mb-3" id="addTitle">Add</h3>
+    <div id="addFields" class="space-y-2"></div>
+    <div class="flex justify-end gap-2 mt-3">
+      <button type="button" class="px-3 py-2 border rounded" onclick="closeAdd()">Cancel</button>
+      <button type="button" class="px-3 py-2 bg-blue-600 text-white rounded" onclick="saveAdd()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Map category name => id for subcategory API -->
+<script id="catMap" type="application/json">
+{%- set cmap = {} -%}
+{%- for c in cats %}{% set _ = cmap.update({c.name: c.id}) %}{% endfor %}
+{{ cmap|tojson }}
+</script>
+
+<script>
+let addType=null;
+let catMapObj = JSON.parse(document.getElementById('catMap').textContent || "{}");
+
+function apiHeaders(){
+  const h={'Content-Type':'application/json'};
+  const t=document.getElementById('csrf_token_assets_form')?.value;
+  if(t){ h['X-CSRFToken']=t; }
+  return h;
+}
+function apiFetch(url, options){
+  return fetch(url, Object.assign({credentials:'same-origin'}, options));
+}
+
+function openAdd(type){
+  addType=type;
+  const m=document.getElementById('addModal');
+  const f=document.getElementById('addFields');
+  const t=document.getElementById('addTitle');
+  f.innerHTML='';
+  if(type==='recipient'){
+    t.textContent='Add Recipient';
+    f.innerHTML = `
+      <label class="block text-sm">Name</label>
+      <input id="add_name" class="w-full border rounded px-3 py-2"/>
+      <label class="block text-sm">Email</label>
+      <input id="add_email" type="email" class="w-full border rounded px-3 py-2"/>
+    `;
+  } else if(type==='subcategory'){
+    t.textContent='Add Sub Category';
+    f.innerHTML = `
+      <label class="block text-sm">Name</label>
+      <input id="add_name" class="w-full border rounded px-3 py-2"/>
+    `;
+  } else {
+    t.textContent='Add '+type;
+    f.innerHTML = `
+      <label class="block text-sm">Name</label>
+      <input id="add_name" class="w-full border rounded px-3 py-2"/>
+    `;
+  }
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeAdd(){
+  const m=document.getElementById('addModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+
+async function saveAdd(){
+  const name=(document.getElementById('add_name')||{}).value||'';
+  const email=(document.getElementById('add_email')||{}).value||'';
+  let url='', payload={};
+
+  if(addType==='team'){ url="{{ url_for('masters.api_add_team') }}"; payload={name}; }
+  if(addType==='manufacturer'){ url="{{ url_for('masters.api_add_manufacturer') }}"; payload={name}; }
+  if(addType==='vendor'){ url="{{ url_for('masters.api_add_vendor') }}"; payload={name}; }
+  if(addType==='location'){ url="{{ url_for('masters.api_add_location') }}"; payload={name}; }
+  if(addType==='category'){ url="{{ url_for('masters.api_add_category') }}"; payload={name}; }
+  if(addType==='subcategory'){
+    const catSel=document.getElementById('category');
+    const categoryName = catSel.value;
+    const category_id = catMapObj[categoryName];
+    if(!category_id){ alert('Please select a Category first'); return; }
+    url="{{ url_for('masters.api_add_subcategory') }}";
+    payload={name, category_id};
+  }
+  if(addType==='recipient'){ url="{{ url_for('masters.api_add_recipient') }}"; payload={name, email}; }
+
+  const res=await apiFetch(url,{method:'POST', headers:apiHeaders(), body:JSON.stringify(payload)});
+  if(!res.ok){
+    try{ const j=await res.json(); alert(j.error||'Failed to add'); }catch(e){ alert('Failed to add'); }
+    return;
+  }
+  const j=await res.json();
+
+  // Update selects immediately
+  if(addType==='team'){
+    document.getElementById('team').add(new Option(j.name, j.name, true, true));
+  }
+  if(addType==='manufacturer'){
+    document.getElementById('manufacturer').add(new Option(j.name, j.name, true, true));
+  }
+  if(addType==='vendor'){
+    document.getElementById('vendor').add(new Option(j.name, j.name, true, true));
+  }
+  if(addType==='location'){
+    document.getElementById('location').add(new Option(j.name, j.name, true, true));
+  }
+  if(addType==='category'){
+    const catSel=document.getElementById('category');
+    catSel.add(new Option(j.name, j.name, true, true));
+    // keep the map in sync for subcategory adds
+    catMapObj[j.name] = j.id;
+    await refreshSubcats();
+  }
+  if(addType==='subcategory'){
+    document.getElementById('sub_category').add(new Option(j.name, j.name, true, true));
+  }
+  if(addType==='recipient'){
+    const s=document.getElementById('recipient_select');
+    const lab=j.name+' ('+j.email+')';
+    s.add(new Option(lab, j.name+'|'+j.email, true, true));
+    syncRecipientFields();
+  }
+  closeAdd();
+}
+
+// dependent dropdown: subcategories for selected category
+async function refreshSubcats(){
+  const catSel=document.getElementById('category');
+  const subSel=document.getElementById('sub_category');
+  if(!catSel||!subSel) return;
+  const category_id = catMapObj[catSel.value];
+  if(!category_id){
+    subSel.innerHTML = '<option value=""></option>';
+    return;
+  }
+  const res=await apiFetch("{{ url_for('masters.api_get_subcategories') }}?category_id="+encodeURIComponent(category_id));
+  if(res.ok){
+    const data=await res.json();
+    subSel.innerHTML='<option value=""></option>';
+    data.forEach(d=> subSel.add(new Option(d.name, d.name)));
+  }
+}
+
+// keep hidden recipient fields in sync with the dropdown
+function syncRecipientFields(){
+  const sel=document.getElementById('recipient_select');
+  const hn=document.getElementById('recipient_name');
+  const he=document.getElementById('recipient_email');
+  const val=sel.value||'';
+  if(val.includes('|')){ const p=val.split('|'); hn.value=p[0]; he.value=p[1]; }
+  else { hn.value=''; he.value=''; }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  // initialize recipient hidden fields
+  syncRecipientFields();
+
+  // load subcategories if a category is already chosen
+  const cat=document.getElementById('category');
+  if(cat){
+    cat.addEventListener('change', refreshSubcats);
+    if(cat.value){ refreshSubcats(); }
+  }
+
+  // toggle amortization_period based on cap_x
+  const cap=document.getElementById('cap_x');
+  if(cap){
+    const ap=document.getElementById('amortization_period');
+    const toggle = () => { ap.disabled = (cap.value !== 'y'); if(ap.disabled) ap.value=''; };
+    cap.addEventListener('change', toggle);
+    toggle(); // initial state
+  }
+
+  document.getElementById('recipient_select')?.addEventListener('change', syncRecipientFields);
+});
+</script>
+{% endblock %}

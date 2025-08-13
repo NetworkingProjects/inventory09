@@ -1,0 +1,101 @@
+<div class="overflow-x-auto custom-scrollbar">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="sticky left-0 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice No</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice Date</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serial #</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO No</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Received Date</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Owner Email</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Manufacturer</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mfg Country</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">HSN</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bonded</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Cal</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Next Cal</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry No</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Returnable</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cap X</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amortization</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sub Category</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+        <th class="sticky right-0 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+      {% for a in assets.items %}
+      <tr class="hover:bg-gray-50">
+        <td class="sticky left-0 bg-white px-6 py-4 text-sm">
+          <a href="{{ url_for('assets.view', id=a.id) }}" class="text-blue-600 hover:text-blue-800">{{ a.invoice_no or '-' }}</a>
+        </td>
+        <td class="px-6 py-4 text-sm">{{ a.invoice_date or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.serial_number or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.purchase_order_no or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.received_date or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.owner_email or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.manufacturer or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.model or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.vendor or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.mfg_country or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.hsn_code or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.is_bonded or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.last_calibrated or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.next_calibration or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.entry_no or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.returnable_no or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.cap_x or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.amortization_period or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.team or '-' }}</td>
+        <td class="px-6 py-4 text-sm">
+          {% if a.recipient_name %}
+            <span class="font-medium">{{ a.recipient_name }}</span>
+            <span class="text-gray-500 text-xs">({{ a.recipient_email }})</span>
+          {% else %}-{% endif %}
+        </td>
+        <td class="px-6 py-4 text-sm">{{ a.category or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.sub_category or '-' }}</td>
+        <td class="px-6 py-4 text-sm">{{ a.location or '-' }}</td>
+        <td class="px-6 py-4 text-sm">
+          <div class="max-w-xs truncate" title="{{ a.notes }}">{{ a.notes or '-' }}</div>
+        </td>
+        <td class="sticky right-0 bg-white px-6 py-4 text-sm whitespace-nowrap">
+          <a class="text-blue-600 hover:text-blue-800" href="{{ url_for('assets.view', id=a.id) }}">View</a>
+          {% if current_user.has('update') %}
+            <a class="text-indigo-600 hover:text-indigo-800 ml-3" href="{{ url_for('assets.edit', id=a.id) }}">Edit</a>
+          {% endif %}
+          {% if can_delete %}
+          <form method="post"
+                action="{{ url_for('assets.delete', id=a.id) }}"
+                class="inline ml-3"
+                onsubmit="return confirm('Delete this asset?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-red-600 hover:text-red-800">Delete</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="25" class="px-6 py-8 text-center text-gray-500">No assets found</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if assets.pages > 1 %}
+<div class="bg-white px-4 py-3 border-t border-gray-200">
+  <div class="flex justify-center text-sm text-gray-700">
+    Page {{ assets.page }} of {{ assets.pages }} ({{ assets.total }} items)
+    {% if assets.has_prev %}<a class="ml-3 px-3 py-1 border rounded hover:bg-gray-50" href="?page={{ assets.prev_num }}">Previous</a>{% endif %}
+    {% if assets.has_next %}<a class="ml-2 px-3 py-1 border rounded hover:bg-gray-50" href="?page={{ assets.next_num }}">Next</a>{% endif %}
+  </div>
+</div>
+{% endif %}

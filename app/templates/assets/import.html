@@ -1,0 +1,29 @@
+
+{% extends "base.html" %}
+{% block title %}Import Assets{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4">
+  <div class="bg-white rounded shadow p-6">
+    <h1 class="text-xl font-semibold mb-4">Import Assets</h1>
+    <p class="text-sm text-gray-600 mb-4">Upload a CSV or Excel (.xlsx) with the exact header:</p>
+    <pre class="bg-gray-50 border rounded p-3 text-xs overflow-x-auto">{{ 'invoice_no,invoice_date,serial_number,purchase_order_no,received_date,owner_email,description,manufacturer,model,vendor,mfg_country,hsn_code,is_bonded,last_calibrated,next_calibration,notes,entry_no,returnable_no,cap_x,amortization_period,team,recipient_name,recipient_email,category,sub_category,location' }}</pre>
+    <!-- <form method="post" action="{{ url_for('assets.import_preview') }}" enctype="multipart/form-data" class="mt-4">
+      {{ csrf_token() }}
+      <input type="file" name="file" accept=".csv,.xlsx" class="border rounded px-3 py-2 w-full" required>
+      <div class="mt-4">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload & Validate</button>
+        <a class="ml-2 text-sm text-gray-600 hover:text-gray-900" href="{{ url_for('assets.dashboard') }}">Cancel</a>
+      </div>
+    </form> -->
+    <form method="post" action="{{ url_for('assets.import_preview') }}" enctype="multipart/form-data" class="mt-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="file" name="file" accept=".csv,.xlsx" class="border rounded px-3 py-2 w-full" required>
+      <div class="mt-4">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload & Validate</button>
+        <a class="ml-2 text-sm text-gray-600 hover:text-gray-900" href="{{ url_for('assets.dashboard') }}">Cancel</a>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,232 +1,111 @@
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
+
+from .extensions import db
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
-import pytz
 
-def now_ist():
-    return datetime.now(pytz.timezone('Asia/Kolkata'))
-
-# class User(UserMixin, db.Model):
-#     __tablename__ = 'users'
-    
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(100), nullable=False)
-#     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-#     password_hash = db.Column(db.String(128), nullable=False)
-#     role = db.Column(db.String(20), nullable=False, default='Researcher')  # Admin, Lab Staff, Researcher, Read-only
-#     created_at = db.Column(db.DateTime, default=now_ist)
-#     is_active = db.Column(db.Boolean, default=True)
-    
-#     # Relationships
-#     assigned_equipment = db.relationship('Equipment', backref='assignee', lazy='dynamic')
-#     audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
-#     movement_logs = db.relationship('MovementLog', backref='user', lazy='dynamic')
-    
-#     def set_password(self, password):
-#         self.password_hash = generate_password_hash(password)
-    
-#     def check_password(self, password):
-#         return check_password_hash(self.password_hash, password)
-    
-#     def has_permission(self, action):
-#         permissions = {
-#             'Admin': ['create', 'read', 'update', 'delete', 'bulk_import', 'user_management'],
-#             'Lab Staff': ['create', 'read', 'update', 'delete', 'bulk_import'],
-#             'Researcher': ['read', 'update', 'checkout', 'checkin'],
-#             'Read-only': ['read']
-#         }
-#         return action in permissions.get(self.role, [])
-    
-#     def __repr__(self):
-#         return f'<User {self.email}>'
-
+ROLE_SUPERADMIN = "superadmin"
+ROLE_ADMIN = "admin"
+ROLE_USER = "user"
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'
-    
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='Researcher')  # Admin, Lab Staff, Researcher, Read-only
-    created_at = db.Column(db.DateTime, default=now_ist)
-    is_active = db.Column(db.Boolean, default=True)
-    
-    # Relationships
-    assigned_equipment = db.relationship('Equipment', backref='assignee', lazy='dynamic')
-    audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), default=ROLE_USER)
 
-    # Distinct movement logs
-    # All logs where this user performed the action
-    movement_logs = db.relationship(
-        'MovementLog',
-        foreign_keys='MovementLog.user_id',
-        backref='user', lazy='dynamic'
-    )
-    # All logs where this user is the "from_user" (e.g., transferred FROM)
-    outgoing_movements = db.relationship(
-        'MovementLog',
-        foreign_keys='MovementLog.from_user_id',
-        backref='from_user_obj', lazy='dynamic'
-    )
-    # All logs where this user is the "to_user" (e.g., transferred TO)
-    incoming_movements = db.relationship(
-        'MovementLog',
-        foreign_keys='MovementLog.to_user_id',
-        backref='to_user_obj', lazy='dynamic'
-    )
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def has_permission(self, action):
-        permissions = {
-            'Admin': ['create', 'read', 'update', 'delete', 'bulk_import', 'user_management'],
-            'Lab Staff': ['create', 'read', 'update', 'delete', 'bulk_import'],
-            'Researcher': ['read', 'update', 'checkout', 'checkin'],
-            'Read-only': ['read']
-        }
-        return action in permissions.get(self.role, [])
-    
-    def __repr__(self):
-        return f'<User {self.email}>'
+    def has(self, perm):
+        if self.role == ROLE_SUPERADMIN:
+            return True
+        if self.role == ROLE_ADMIN:
+            return perm in {"create","update","export","user_management"}
+        return perm in set()
 
-
-class Equipment(db.Model):
-    __tablename__ = 'equipment'
-    
-    # Primary identifiers
+class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    asset_tag = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    name = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+
+class Manufacturer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+
+class VendorM(db.Model):
+    __tablename__ = 'vendor'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+
+class LocationM(db.Model):
+    __tablename__ = 'location'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+
+class Recipient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    __table_args__ = (db.UniqueConstraint('name','email', name='uq_recipient_name_email'),)
+
+class CategoryM(db.Model):
+    __tablename__ = 'category'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+
+class SubCategoryM(db.Model):
+    __tablename__ = 'subcategory'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
+    category = db.relationship('CategoryM', backref='subcategories')
+    __table_args__ = (db.UniqueConstraint('name','category_id', name='uq_subcat_name_cat'),)
+
+class Asset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_no = db.Column(db.String(120))
+    invoice_date = db.Column(db.Date)
+    serial_number = db.Column(db.String(120))
+    purchase_order_no = db.Column(db.String(120))
+    received_date = db.Column(db.Date)
+    owner_email = db.Column(db.String(255))
     description = db.Column(db.Text)
-    
-    # Categorization
-    category = db.Column(db.String(100), nullable=False, index=True)
-    model_number = db.Column(db.String(100))
-    manufacturer = db.Column(db.String(100), index=True)
-    serial_number = db.Column(db.String(100))
-    
-    # Dates
-    procurement_date = db.Column(db.Date)
-    warranty_expiry = db.Column(db.Date)
-    created_at = db.Column(db.DateTime, default=now_ist)
-    updated_at = db.Column(db.DateTime, default=now_ist, onupdate=now_ist)
-    
-    # Status and condition
-    status = db.Column(db.String(50), nullable=False, default='Available', index=True)  # Available, In Use, Under Maintenance, Retired, Missing
-    condition = db.Column(db.String(50), nullable=False, default='Good')  # New, Good, Needs Repair, Obsolete
-    
-    # Chip-specific fields (nullable for non-chip equipment)
-    chip_type = db.Column(db.String(50))  # FPGA, ASIC, ARM, etc.
-    package_type = db.Column(db.String(50))  # BGA, QFN, DIP, etc.
-    pin_count = db.Column(db.Integer)
-    temperature_grade = db.Column(db.String(50))  # Commercial, Industrial, Military
-    testing_status = db.Column(db.String(50))  # Untested, Passed, Failed, Rework
-    revision_info = db.Column(db.String(100))
-    
-    # Files and documentation
-    design_files = db.Column(db.Text)  # URL or file path
-    
-    # Location and assignment
-    location = db.Column(db.String(200))  # Building / Lab Room / Cabinet / Shelf
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    
-    # Additional metadata
-    tags = db.Column(db.String(500))  # Comma-separated tags
+    manufacturer = db.Column(db.String(120))
+    model = db.Column(db.String(120))
+    vendor = db.Column(db.String(120))
+    mfg_country = db.Column(db.String(120))
+    hsn_code = db.Column(db.String(120))
+    is_bonded = db.Column(db.String(3))
+    last_calibrated = db.Column(db.Date)
+    next_calibration = db.Column(db.Date)
     notes = db.Column(db.Text)
-    
-    # Cost and value (for future reporting)
-    purchase_cost = db.Column(db.Numeric(10, 2))
-    current_value = db.Column(db.Numeric(10, 2))
-    
-    # Relationships
-    movement_logs = db.relationship('MovementLog', backref='equipment', lazy='dynamic', cascade='all, delete-orphan')
-    audit_logs = db.relationship('AuditLog', backref='equipment', lazy='dynamic', cascade='all, delete-orphan')
-    
-    def get_tags_list(self):
-        return [tag.strip() for tag in (self.tags or '').split(',') if tag.strip()]
-    
-    def set_tags_list(self, tags_list):
-        self.tags = ', '.join(tags_list) if tags_list else ''
-    
-    def is_available(self):
-        return self.status == 'Available'
-    
-    def can_be_assigned(self):
-        return self.status in ['Available', 'In Use']
-    
-    def __repr__(self):
-        return f'<Equipment {self.asset_tag}: {self.name}>'
+    entry_no = db.Column(db.String(120))
+    returnable_no = db.Column(db.String(3))
+    cap_x = db.Column(db.String(3))
+    amortization_period = db.Column(db.String(20))
+    team = db.Column(db.String(120))
+    recipient_name = db.Column(db.String(120))
+    recipient_email = db.Column(db.String(255))
+    category = db.Column(db.String(120))
+    sub_category = db.Column(db.String(120))
+    location = db.Column(db.String(120))
 
-class MovementLog(db.Model):
-    __tablename__ = 'movement_logs'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
-    action = db.Column(db.String(50), nullable=False)  # checkout, checkin, move, assign, unassign
-    from_location = db.Column(db.String(200))
-    to_location = db.Column(db.String(200))
-    from_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    to_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    
-    timestamp = db.Column(db.DateTime, default=now_ist, index=True)
-    notes = db.Column(db.Text)
-    
-    # Relationships for from/to users
-    from_user = db.relationship('User', foreign_keys=[from_user_id])
-    to_user = db.relationship('User', foreign_keys=[to_user_id])
-    
-    def __repr__(self):
-        return f'<MovementLog {self.action} for Equipment {self.equipment_id}>'
-
-
-
-
-class AuditLog(db.Model):
-    __tablename__ = 'audit_logs'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=True)
-    
-    action = db.Column(db.String(100), nullable=False)  # create, update, delete, login, logout, etc.
-    table_name = db.Column(db.String(50))
-    record_id = db.Column(db.Integer)
-    
-    old_values = db.Column(db.Text)  # JSON string of old values
-    new_values = db.Column(db.Text)  # JSON string of new values
-    
-    timestamp = db.Column(db.DateTime, default=now_ist, index=True)
-    ip_address = db.Column(db.String(45))
-    user_agent = db.Column(db.Text)
-    
-    def __repr__(self):
-        return f'<AuditLog {self.action} by User {self.user_id}>'
-
-# Utility function to log audit events
-def log_audit_event(user_id, action, table_name=None, record_id=None, old_values=None, new_values=None, equipment_id=None):
-    import json
-    from flask import request
-    
-    audit_log = AuditLog(
-        user_id=user_id,
-        equipment_id=equipment_id,
-        action=action,
-        table_name=table_name,
-        record_id=record_id,
-        old_values=json.dumps(old_values) if old_values else None,
-        new_values=json.dumps(new_values) if new_values else None,
-        ip_address=request.remote_addr if request else None,
-        user_agent=request.headers.get('User-Agent') if request else None
-    )
-    
-    db.session.add(audit_log)
+def seed_defaults():
+    from werkzeug.security import generate_password_hash
+    if not User.query.first():
+        admin = User(name="Super Admin", email="admin@example.com",
+                     password_hash=generate_password_hash("admin123"), role=ROLE_SUPERADMIN)
+        db.session.add(admin)
+    if not Team.query.first():
+        db.session.add_all([Team(name=n) for n in ["Validation","Platform","Manufacturing","R&D"]])
+    if not Manufacturer.query.first():
+        db.session.add_all([Manufacturer(name=n) for n in ["Tektronix","Keysight","R&S","Hakko","Saleae"]])
+    if not VendorM.query.first():
+        db.session.add_all([VendorM(name=n) for n in ["TechVendor","InstruMart","MeasureCo","SolderPro","LogicVendor"]])
+    if not LocationM.query.first():
+        db.session.add_all([LocationM(name=n) for n in ["Bangalore","Hyderabad","Pune","Chennai"]])
+    if not CategoryM.query.first():
+        te = CategoryM(name="Test Equipment")
+        tools = CategoryM(name="Tools")
+        db.session.add_all([te, tools]); db.session.flush()
+        db.session.add_all([SubCategoryM(name="Oscilloscope", category_id=te.id),
+                            SubCategoryM(name="Analyzer", category_id=te.id),
+                            SubCategoryM(name="Multimeter", category_id=te.id),
+                            SubCategoryM(name="Soldering", category_id=tools.id)])
     db.session.commit()
