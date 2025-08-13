@@ -1,29 +1,281 @@
-
 {% extends "base.html" %}
-{% block title %}Import Assets{% endblock %}
+{% block title %}Import Equipment Data{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto px-4">
-  <div class="bg-white rounded shadow p-6">
-    <h1 class="text-xl font-semibold mb-4">Import Assets</h1>
-    <p class="text-sm text-gray-600 mb-4">Upload a CSV or Excel (.xlsx) with the exact header:</p>
-    <pre class="bg-gray-50 border rounded p-3 text-xs overflow-x-auto">{{ 'invoice_no,invoice_date,serial_number,purchase_order_no,received_date,owner_email,description,manufacturer,model,vendor,mfg_country,hsn_code,is_bonded,last_calibrated,next_calibration,notes,entry_no,returnable_no,cap_x,amortization_period,team,recipient_name,recipient_email,category,sub_category,location' }}</pre>
-    <!-- <form method="post" action="{{ url_for('assets.import_preview') }}" enctype="multipart/form-data" class="mt-4">
-      {{ csrf_token() }}
-      <input type="file" name="file" accept=".csv,.xlsx" class="border rounded px-3 py-2 w-full" required>
-      <div class="mt-4">
-        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload & Validate</button>
-        <a class="ml-2 text-sm text-gray-600 hover:text-gray-900" href="{{ url_for('assets.dashboard') }}">Cancel</a>
-      </div>
-    </form> -->
-    <form method="post" action="{{ url_for('assets.import_preview') }}" enctype="multipart/form-data" class="mt-4">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="file" name="file" accept=".csv,.xlsx" class="border rounded px-3 py-2 w-full" required>
-      <div class="mt-4">
-        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Upload & Validate</button>
-        <a class="ml-2 text-sm text-gray-600 hover:text-gray-900" href="{{ url_for('assets.dashboard') }}">Cancel</a>
-      </div>
-    </form>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-4 mb-4">
+      <a href="{{ url_for('assets.dashboard') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>
+        <span>Back to Dashboard</span>
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Import Equipment Data</h1>
+    <p class="text-gray-600">Upload CSV or Excel files to bulk import equipment data</p>
+  </div>
 
+  <!-- Import Steps -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
+          <span class="text-sm font-medium text-primary-600">Upload File</span>
+        </div>
+        <div class="w-16 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-medium">2</div>
+          <span class="text-sm text-gray-600">Preview & Validate</span>
+        </div>
+        <div class="w-16 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+          <span class="text-sm text-gray-600">Import Complete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Upload Section -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-upload text-white text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">Upload Your File</h2>
+            <p class="text-gray-600">Select a CSV or Excel file to import</p>
+          </div>
+        </div>
+
+        <form method="post" action="{{ url_for('assets.import_preview') }}" enctype="multipart/form-data" id="uploadForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <!-- File Drop Zone -->
+          <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 transition-colors" id="dropZone">
+            <div class="space-y-4">
+              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-lg font-medium text-gray-900 mb-2">Drop your file here or click to browse</p>
+                <p class="text-gray-600">Supports CSV and Excel (.xlsx) files up to 10MB</p>
+              </div>
+              <input type="file" name="file" accept=".csv,.xlsx" class="hidden" id="fileInput" required>
+              <button type="button" onclick="document.getElementById('fileInput').click()" 
+                      class="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
+                <i class="fas fa-folder-open"></i>
+                <span>Choose File</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Selected File Info -->
+          <div id="fileInfo" class="hidden mt-6 p-4 bg-gray-50 rounded-xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-file text-green-600"></i>
+                </div>
+                <div>
+                  <div class="font-medium text-gray-900" id="fileName"></div>
+                  <div class="text-sm text-gray-600" id="fileSize"></div>
+                </div>
+              </div>
+              <button type="button" onclick="clearFile()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Upload Button -->
+          <div class="mt-8 flex items-center justify-between">
+            <a href="{{ url_for('assets.dashboard') }}" class="text-gray-600 hover:text-gray-900 transition-colors">
+              Cancel
+            </a>
+            <button type="submit" id="uploadBtn" disabled 
+                    class="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-medium transition-colors">
+              <i class="fas fa-arrow-right"></i>
+              <span>Upload & Validate</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Instructions Sidebar -->
+    <div class="space-y-6">
+      <!-- File Format Requirements -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-info-circle text-blue-600"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">File Requirements</h3>
+        </div>
+        
+        <div class="space-y-3 text-sm">
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-check text-green-500 mt-0.5"></i>
+            <span class="text-gray-700">CSV or Excel (.xlsx) format</span>
+          </div>
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-check text-green-500 mt-0.5"></i>
+            <span class="text-gray-700">Maximum file size: 10MB</span>
+          </div>
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-check text-green-500 mt-0.5"></i>
+            <span class="text-gray-700">First row must contain headers</span>
+          </div>
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-check text-green-500 mt-0.5"></i>
+            <span class="text-gray-700">UTF-8 encoding recommended</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Required Headers -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-list text-yellow-600"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Required Headers</h3>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto custom-scrollbar">
+          <div class="grid grid-cols-1 gap-1 text-xs font-mono">
+            {% set headers = [
+              'invoice_no', 'invoice_date', 'serial_number', 'purchase_order_no',
+              'received_date', 'owner_email', 'description', 'manufacturer',
+              'model', 'vendor', 'mfg_country', 'hsn_code', 'is_bonded',
+              'last_calibrated', 'next_calibration', 'notes', 'entry_no',
+              'returnable_no', 'cap_x', 'amortization_period', 'team',
+              'recipient_name', 'recipient_email', 'category', 'sub_category', 'location'
+            ] %}
+            {% for header in headers %}
+            <div class="text-gray-700 py-1 px-2 hover:bg-gray-100 rounded">{{ header }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-xs text-blue-800">
+            <i class="fas fa-lightbulb mr-1"></i>
+            <strong>Tip:</strong> Download a sample template from the export feature to ensure proper formatting.
+          </p>
+        </div>
+      </div>
+
+      <!-- Sample Data -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-download text-purple-600"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Sample Template</h3>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">Download a sample CSV template with the correct headers and example data.</p>
+        
+        <a href="#" onclick="downloadSampleCSV()" 
+           class="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <i class="fas fa-download"></i>
+          <span>Download Sample</span>
+        </a>
+      </div>
+    </div>
   </div>
 </div>
+
+<script>
+// File handling
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const uploadBtn = document.getElementById('uploadBtn');
+const dropZone = document.getElementById('dropZone');
+
+fileInput.addEventListener('change', handleFileSelect);
+
+// Drag and drop
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('border-primary-400', 'bg-primary-50');
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('border-primary-400', 'bg-primary-50');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('border-primary-400', 'bg-primary-50');
+  
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    fileInput.files = files;
+    handleFileSelect();
+  }
+});
+
+function handleFileSelect() {
+  const file = fileInput.files[0];
+  if (file) {
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileInfo.classList.remove('hidden');
+    uploadBtn.disabled = false;
+    uploadBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+  }
+}
+
+function clearFile() {
+  fileInput.value = '';
+  fileInfo.classList.add('hidden');
+  uploadBtn.disabled = true;
+  uploadBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function downloadSampleCSV() {
+  const headers = [
+    'invoice_no', 'invoice_date', 'serial_number', 'purchase_order_no',
+    'received_date', 'owner_email', 'description', 'manufacturer',
+    'model', 'vendor', 'mfg_country', 'hsn_code', 'is_bonded',
+    'last_calibrated', 'next_calibration', 'notes', 'entry_no',
+    'returnable_no', 'cap_x', 'amortization_period', 'team',
+    'recipient_name', 'recipient_email', 'category', 'sub_category', 'location'
+  ];
+  
+  const sampleData = [
+    'INV-001', '2024-01-15', 'SN123456', 'PO-001',
+    '2024-01-20', 'john.doe@example.com', 'Digital Oscilloscope', 'Tektronix',
+    'TDS2024C', 'TechVendor', 'United States', '9030', 'n',
+    '2023-12-01', '2024-12-01', 'Excellent condition', 'E001',
+    'y', 'y', '5 years', 'Validation',
+    'John Doe', 'john.doe@example.com', 'Test Equipment', 'Oscilloscope', 'Bangalore'
+  ];
+  
+  const csvContent = headers.join(',') + '\n' + sampleData.join(',');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'equipment_import_template.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+</script>
 {% endblock %}

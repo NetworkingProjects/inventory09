@@ -1,59 +1,177 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Lab Inventory{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); }
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
   {% if current_user.is_authenticated %}
-  <nav class="bg-white border-b shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-6">
-        <a href="{{ url_for('assets.dashboard') }}" class="font-bold">Lab Inventory</a>
-        <a href="{{ url_for('assets.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">Dashboard</a>
-        <a href="{{ url_for('assets.analytics_page') }}" class="text-sm text-gray-600 hover:text-gray-900">Analytics</a>
-        {% if current_user.has('create') %}
-          <a href="{{ url_for('assets.create') }}" class="text-sm text-gray-600 hover:text-gray-900">Add Equipment</a>
-          <a href="{{ url_for('assets.import_page') }}" class="text-sm text-gray-600 hover:text-gray-900">Import</a>
-        {% endif %}
-        {% if current_user.role == 'superadmin' %}
-        <div class="relative">
-          <button id="addBtn" type="button" class="text-sm text-gray-600 hover:text-gray-900">Add ▾</button>
-          <div id="addMenu" class="hidden absolute mt-2 bg-white border rounded shadow w-56 z-10">
-            <a href="{{ url_for('auth.users') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">User</a>
-            <a href="{{ url_for('masters.index', tab='team') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Team</a>
-            <a href="{{ url_for('masters.index', tab='recipient') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Recipient Details</a>
-            <a href="{{ url_for('masters.index', tab='category') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Category/Sub Category</a>
-            <a href="{{ url_for('masters.index', tab='manufacturer') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Manufacturer</a>
-            <a href="{{ url_for('masters.index', tab='vendor') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Vendor</a>
-            <a href="{{ url_for('masters.index', tab='location') }}" class="block px-4 py-2 text-sm hover:bg-gray-50">Location</a>
+  <nav class="glass-effect border-b border-white/20 shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-8">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <i class="fas fa-flask text-white text-lg"></i>
+            </div>
+            <a href="{{ url_for('assets.dashboard') }}" class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Lab Inventory
+            </a>
+          </div>
+          
+          <div class="hidden md:flex items-center space-x-6">
+            <a href="{{ url_for('assets.dashboard') }}" class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-white/50 transition-all">
+              <i class="fas fa-tachometer-alt text-sm"></i>
+              <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="{{ url_for('assets.analytics_page') }}" class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-white/50 transition-all">
+              <i class="fas fa-chart-bar text-sm"></i>
+              <span class="text-sm font-medium">Analytics</span>
+            </a>
+            {% if current_user.has('create') %}
+            <a href="{{ url_for('assets.create') }}" class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-white/50 transition-all">
+              <i class="fas fa-plus text-sm"></i>
+              <span class="text-sm font-medium">Add Equipment</span>
+            </a>
+            <a href="{{ url_for('assets.import_page') }}" class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-white/50 transition-all">
+              <i class="fas fa-upload text-sm"></i>
+              <span class="text-sm font-medium">Import</span>
+            </a>
+            {% endif %}
           </div>
         </div>
-        {% endif %}
-      </div>
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-blue-700">{{ current_user.email }}</span>
-        <a class="text-sm text-red-600 hover:text-gray-900" href="{{ url_for('auth.logout') }}">Sign out</a>
+
+        <div class="flex items-center space-x-4">
+          {% if current_user.role == 'superadmin' %}
+          <div class="relative">
+            <button id="addBtn" type="button" class="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-gray-700 transition-all">
+              <i class="fas fa-cog text-sm"></i>
+              <span class="text-sm font-medium">Manage</span>
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="addMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+              <a href="{{ url_for('auth.users') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-users w-4"></i>
+                <span>Users</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='team') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-users-cog w-4"></i>
+                <span>Teams</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='recipient') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-user-tag w-4"></i>
+                <span>Recipients</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='category') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-tags w-4"></i>
+                <span>Categories</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='manufacturer') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-industry w-4"></i>
+                <span>Manufacturers</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='vendor') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-store w-4"></i>
+                <span>Vendors</span>
+              </a>
+              <a href="{{ url_for('masters.index', tab='location') }}" class="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-map-marker-alt w-4"></i>
+                <span>Locations</span>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+          
+          <div class="flex items-center space-x-3 px-4 py-2 bg-white/20 rounded-lg">
+            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-medium">{{ current_user.name[0].upper() }}</span>
+            </div>
+            <div class="hidden sm:block">
+              <div class="text-sm font-medium text-gray-900">{{ current_user.name }}</div>
+              <div class="text-xs text-gray-600">{{ current_user.email }}</div>
+            </div>
+          </div>
+          
+          <a class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" href="{{ url_for('auth.logout') }}">
+            <i class="fas fa-sign-out-alt text-sm"></i>
+            <span class="text-sm font-medium">Sign out</span>
+          </a>
+        </div>
       </div>
     </div>
   </nav>
   {% endif %}
-  <div id="flashes" class="fixed top-4 right-4 z-50 space-y-2">
+
+  <!-- Flash Messages -->
+  <div id="flashes" class="fixed top-20 right-4 z-50 space-y-3">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
-      <div data-flash class="px-4 py-3 rounded border shadow bg-white text-sm {{ 'border-green-300 text-green-800' if category=='success' else ('border-red-300 text-red-800' if category=='error' else 'border-blue-300 text-blue-800') }}">{{ message }}</div>
+      <div data-flash class="flex items-center space-x-3 px-6 py-4 rounded-xl shadow-lg glass-effect border-l-4 {{ 'border-green-500 text-green-800' if category=='success' else ('border-red-500 text-red-800' if category=='error' else 'border-blue-500 text-blue-800') }} max-w-md">
+        <i class="fas {{ 'fa-check-circle' if category=='success' else ('fa-exclamation-circle' if category=='error' else 'fa-info-circle') }}"></i>
+        <span class="text-sm font-medium">{{ message }}</span>
+        <button onclick="this.parentElement.remove()" class="ml-auto text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
       {% endfor %}
     {% endwith %}
   </div>
-  <main class="py-6">{% block content %}{% endblock %}</main>
+
+  <main class="py-8">
+    {% block content %}{% endblock %}
+  </main>
+
   <script>
   (function(){
     const btn=document.getElementById('addBtn'), menu=document.getElementById('addMenu');
-    if(btn && menu){ btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.classList.toggle('hidden'); }); document.addEventListener('click', ()=> menu.classList.add('hidden')); }
+    if(btn && menu){ 
+      btn.addEventListener('click', (e)=>{ 
+        e.stopPropagation(); 
+        menu.classList.toggle('hidden'); 
+      }); 
+      document.addEventListener('click', ()=> menu.classList.add('hidden')); 
+    }
+    
     const flashes=document.querySelectorAll('[data-flash]');
-    flashes.forEach((el,i)=> setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }, 6000 + i*200));
+    flashes.forEach((el,i)=> {
+      setTimeout(()=>{ 
+        el.style.transition='all 0.5s ease-out'; 
+        el.style.transform='translateX(100%)'; 
+        el.style.opacity='0'; 
+        setTimeout(()=>el.remove(),500); 
+      }, 5000 + i*200);
+    });
   })();
   </script>
 </body>

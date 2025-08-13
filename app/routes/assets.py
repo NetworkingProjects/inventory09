@@ -253,6 +253,10 @@ def import_page():
 @assets_bp.route("/import/preview", methods=["POST"])
 @login_required
 def import_preview():
+    if not can_create():
+        flash("Permission denied", "error")
+        return redirect(url_for("assets.dashboard"))
+        
     f = request.files.get("file")
     if not f:
         flash("No file uploaded", "error")
@@ -268,84 +272,139 @@ def import_preview():
     ]
 
     rows = []
+    errors = []
+    warnings = []
 
     if filename.endswith(".csv"):
-        from io import TextIOWrapper
-        import csv
-        wrapper = TextIOWrapper(f.stream, encoding="utf-8", newline="")
-        reader = csv.DictReader(wrapper)
-        if not reader.fieldnames:
-            flash("CSV has no header row.", "error")
+        try:
+            from io import TextIOWrapper
+            import csv
+            wrapper = TextIOWrapper(f.stream, encoding="utf-8", newline="")
+            reader = csv.DictReader(wrapper)
+            if not reader.fieldnames:
+                flash("CSV has no header row.", "error")
+                return redirect(url_for("assets.import_page"))
+            
+            # Check for missing and extra headers
+            file_headers = [h.strip() for h in reader.fieldnames if h]
+            missing = [h for h in required_headers if h not in file_headers]
+            extra = [h for h in file_headers if h not in required_headers]
+            
+            if missing:
+                errors.append(f"Missing required headers: {', '.join(missing)}")
+            if extra:
+                warnings.append(f"Extra headers will be ignored: {', '.join(extra)}")
+            
+            # Read data rows
+            for row_num, r in enumerate(reader, start=2):
+                row_data = {}
+                for k in required_headers:
+                    value = r.get(k, "")
+                    row_data[k] = value if value is not None else ""
+                rows.append(row_data)
+                
+        except Exception as e:
+            flash(f"Error reading CSV file: {str(e)}", "error")
             return redirect(url_for("assets.import_page"))
-        missing = [h for h in required_headers if h not in reader.fieldnames]
-        if missing:
-            flash(f"Missing headers: {', '.join(missing)}", "error")
-            return redirect(url_for("assets.import_page"))
-        for r in reader:
-            rows.append({k: (r.get(k, "") if r.get(k, "") is not None else "") for k in required_headers})
 
     elif filename.endswith(".xlsx"):
-        from openpyxl import load_workbook
-        wb = load_workbook(f, data_only=True)
-        ws = wb.active
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(f, data_only=True)
+            ws = wb.active
 
-        header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
-        header = [str(v).strip() if v is not None else "" for v in header_row]
+            header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
+            file_headers = [str(v).strip() if v is not None else "" for v in header_row]
+            file_headers = [h for h in file_headers if h]  # Remove empty headers
 
-        missing = [h for h in required_headers if h not in header]
-        if missing:
-            flash(f"Missing headers: {', '.join(missing)}", "error")
+            # Check for missing and extra headers
+            missing = [h for h in required_headers if h not in file_headers]
+            extra = [h for h in file_headers if h not in required_headers]
+            
+            if missing:
+                errors.append(f"Missing required headers: {', '.join(missing)}")
+            if extra:
+                warnings.append(f"Extra headers will be ignored: {', '.join(extra)}")
+
+            idx_map = {name: i for i, name in enumerate(file_headers)}
+            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                if not any(row):  # Skip completely empty rows
+                    continue
+                    
+                row_data = {}
+                for h in required_headers:
+                    i = idx_map.get(h)
+                    if i is not None and i < len(row):
+                        row_data[h] = _cell_to_json(row[i], h)
+                    else:
+                        row_data[h] = ""
+                rows.append(row_data)
+                
+        except Exception as e:
+            flash(f"Error reading Excel file: {str(e)}", "error")
             return redirect(url_for("assets.import_page"))
-
-        idx_map = {name: i for i, name in enumerate(header)}
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            d = {k: "" for k in required_headers}
-            for h in required_headers:
-                i = idx_map.get(h)
-                if i is not None and i < len(row):
-                    d[h] = _cell_to_json(row[i], h)   # <-- uses the global helper
-            rows.append(d)
-
 
     else:
         flash("Unsupported file type. Upload .csv or .xlsx", "error")
         return redirect(url_for("assets.import_page"))
 
+    if not rows:
+        flash("No data rows found in the file", "error")
+        return redirect(url_for("assets.import_page"))
+
     # save raw rows to session (commit route will coerce types)
     session["import_rows"] = rows
 
-    # quick analytics
+    # Validation and analytics
     empty_counts = {h: 0 for h in required_headers}
+    type_issues = []
+    invalid_rows = 0
+    
     for r in rows:
         for h in required_headers:
             if r.get(h, "") in ("", None):
                 empty_counts[h] += 1
+        
+        # Check email format
+        for email_field in ['owner_email', 'recipient_email']:
+            email_val = r.get(email_field, "")
+            if email_val and "@" not in email_val:
+                type_issues.append({"column": email_field, "count": 1})
 
-    # check for date parse issues to drive the "Continue anyway" banner
+    # Check for date parse issues
     date_fields = ["invoice_date","received_date","last_calibrated","next_calibration"]
     bad_date_rows = 0
     for r in rows:
         for f in date_fields:
             v = r.get(f, "")
             if v not in ("", None):
-                if parse_date(v) is None:  # parse_date is the helper we added earlier
+                if parse_date(v) is None:
                     bad_date_rows += 1
                     break
 
+    # Calculate invalid rows
+    invalid_rows = bad_date_rows + len([t for t in type_issues if t["count"] > 0])
+
     stats = {
         "total_rows": len(rows),
-        "empty_by_column": empty_counts,
+        "invalid_rows": invalid_rows,
+        "missing_cols": [h for h in required_headers if h not in (file_headers if 'file_headers' in locals() else [])],
+        "extra_cols": extra if 'extra' in locals() else [],
+        "empties": empty_counts,
+        "type_issues": type_issues,
         "bad_date_rows": bad_date_rows
     }
+
+    has_errors = bool(errors or bad_date_rows > 0 or invalid_rows > 0)
 
     return render_template(
         "assets/import_preview.html",
         rows_preview=rows[:25],
         total=len(rows),
-        empty_counts=empty_counts,
-        stats=stats,   # <<< pass stats
-        s=stats,       # <<< optional alias if template uses {{ s.* }}
-        has_errors=(bad_date_rows > 0)
+        stats=stats,
+        errors=errors,
+        warnings=warnings,
+        has_errors=has_errors
     )
 
 

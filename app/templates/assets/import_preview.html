@@ -1,43 +1,272 @@
-
 {% extends "base.html" %}
 {% block title %}Import Preview{% endblock %}
 {% block content %}
-{% set s = stats if stats is defined else (s if s is defined else {'total_rows': total, 'empty_by_column': empty_counts, 'bad_date_rows': 0}) %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-4 mb-4">
+      <a href="{{ url_for('assets.import_page') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>
+        <span>Back to Upload</span>
+      </a>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Import Preview & Validation</h1>
+    <p class="text-gray-600">Review your data before importing</p>
+  </div>
 
-<div class="max-w-5xl mx-auto px-4">
-  <div class="bg-white rounded shadow p-6">
-    <h1 class="text-xl font-semibold mb-4">Import Validation</h1>
-    {% set s = stats %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-gray-50 rounded p-4"><div class="text-2xl font-bold">{{ s.total_rows }}</div><div class="text-sm text-gray-600">Total Rows</div></div>
-      <div class="bg-gray-50 rounded p-4"><div class="text-2xl font-bold">{{ s.total_rows - s.invalid_rows }}</div><div class="text-sm text-gray-600">Valid Rows</div></div>
-      <div class="bg-gray-50 rounded p-4"><div class="text-2xl font-bold">{{ s.invalid_rows }}</div><div class="text-sm text-gray-600">Rows With Issues</div></div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div><h3 class="font-medium mb-2">Missing Columns</h3>{% if s.missing_cols %}<ul class="list-disc pl-5 text-sm">{% for c in s.missing_cols %}<li>{{ c }}</li>{% endfor %}</ul>{% else %}<p class="text-sm text-green-700">None</p>{% endif %}</div>
-      <div><h3 class="font-medium mb-2">Extra Columns</h3>{% if s.extra_cols %}<ul class="list-disc pl-5 text-sm">{% for c in s.extra_cols %}<li>{{ c }}</li>{% endfor %}</ul>{% else %}<p class="text-sm text-green-700">None</p>{% endif %}</div>
-      <div><h3 class="font-medium mb-2">Email Format Issues</h3>{% if s.type_issues %}<ul class="list-disc pl-5 text-sm">{% for t in s.type_issues %}<li>{{ t.column }}: {{ t.count }}</li>{% endfor %}</ul>{% else %}<p class="text-sm text-green-700">None</p>{% endif %}</div>
-      <div><h3 class="font-medium mb-2">Empty Cells per Column</h3><div class="grid grid-cols-2 gap-2 text-sm">{% for k,v in s.empties.items() %}<div class="flex justify-between border rounded px-2 py-1"><span>{{ k }}</span><span>{{ v }}</span></div>{% endfor %}</div></div>
-    </div>
-    {% if has_errors %}
-      <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded p-4 mb-4">
-        Issues found. You can <strong>Continue import anyway</strong> or <strong>Change file</strong>.
+  <!-- Progress Steps -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+            <i class="fas fa-check"></i>
+          </div>
+          <span class="text-sm font-medium text-green-600">Upload Complete</span>
+        </div>
+        <div class="w-16 h-0.5 bg-green-600"></div>
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
+          <span class="text-sm font-medium text-primary-600">Preview & Validate</span>
+        </div>
+        <div class="w-16 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+          <span class="text-sm text-gray-600">Import Complete</span>
+        </div>
       </div>
-      <form method="post" action="{{ url_for('assets.import_commit') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="bg-green-600 text-white px-4 py-2 rounded text-sm">Continue Import Anyway</button>
-        <a href="{{ url_for('assets.import_page') }}" class="ml-2 text-sm text-gray-600 hover:text-gray-900">Change File</a>
-      </form>
-    {% else %}
-      <div class="bg-green-50 border border-green-200 text-green-800 rounded p-4 mb-4">
-        All good! No issues detected.
+    </div>
+  </div>
+
+  <!-- Validation Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+          <i class="fas fa-table text-blue-600 text-xl"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900">{{ stats.total_rows }}</div>
+          <div class="text-sm text-gray-600">Total Rows</div>
+        </div>
       </div>
-      <form method="post" action="{{ url_for('assets.import_commit') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Import Now</button>
-      </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+          <i class="fas fa-check-circle text-green-600 text-xl"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900">{{ stats.total_rows - stats.invalid_rows }}</div>
+          <div class="text-sm text-gray-600">Valid Rows</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 {{ 'bg-red-100' if stats.invalid_rows > 0 else 'bg-gray-100' }} rounded-xl flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle {{ 'text-red-600' if stats.invalid_rows > 0 else 'text-gray-400' }} text-xl"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold {{ 'text-red-600' if stats.invalid_rows > 0 else 'text-gray-900' }}">{{ stats.invalid_rows }}</div>
+          <div class="text-sm text-gray-600">Issues Found</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+          <i class="fas fa-percentage text-purple-600 text-xl"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900">{{ ((stats.total_rows - stats.invalid_rows) / stats.total_rows * 100) | round(1) }}%</div>
+          <div class="text-sm text-gray-600">Success Rate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Validation Details -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Issues -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 {{ 'bg-red-100' if has_errors else 'bg-green-100' }} rounded-lg flex items-center justify-center">
+          <i class="fas {{ 'fa-exclamation-triangle text-red-600' if has_errors else 'fa-check-circle text-green-600' }}"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Validation Results</h3>
+      </div>
+
+      {% if errors %}
+      <div class="space-y-3 mb-6">
+        <h4 class="font-medium text-red-800 flex items-center">
+          <i class="fas fa-times-circle mr-2"></i>Errors
+        </h4>
+        {% for error in errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p class="text-sm text-red-800">{{ error }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if warnings %}
+      <div class="space-y-3 mb-6">
+        <h4 class="font-medium text-yellow-800 flex items-center">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Warnings
+        </h4>
+        {% for warning in warnings %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <p class="text-sm text-yellow-800">{{ warning }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if stats.type_issues %}
+      <div class="space-y-3 mb-6">
+        <h4 class="font-medium text-orange-800 flex items-center">
+          <i class="fas fa-exclamation-circle mr-2"></i>Data Format Issues
+        </h4>
+        {% for issue in stats.type_issues %}
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <p class="text-sm text-orange-800">{{ issue.column }}: {{ issue.count }} invalid entries</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if stats.bad_date_rows > 0 %}
+      <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6">
+        <p class="text-sm text-orange-800">
+          <i class="fas fa-calendar-times mr-2"></i>
+          {{ stats.bad_date_rows }} rows have invalid date formats
+        </p>
+      </div>
+      {% endif %}
+
+      {% if not errors and not warnings and not stats.type_issues and stats.bad_date_rows == 0 %}
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-check-circle text-green-600"></i>
+          <div>
+            <h4 class="font-medium text-green-800">All Good!</h4>
+            <p class="text-sm text-green-700">No validation issues detected. Ready to import.</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Data Quality -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-chart-bar text-blue-600"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Data Completeness</h3>
+      </div>
+
+      <div class="space-y-4 max-h-64 overflow-y-auto custom-scrollbar">
+        {% for field, empty_count in stats.empties.items() %}
+        {% set filled_count = stats.total_rows - empty_count %}
+        {% set percentage = (filled_count / stats.total_rows * 100) if stats.total_rows > 0 else 0 %}
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-sm font-medium text-gray-700">{{ field.replace('_', ' ').title() }}</span>
+            <span class="text-sm text-gray-600">{{ filled_count }}/{{ stats.total_rows }}</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300" 
+                 style="width: {{ percentage }}%"></div>
+          </div>
+          <div class="text-xs text-gray-500 mt-1">{{ percentage | round(1) }}% complete</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Preview -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-eye text-gray-600"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Data Preview</h3>
+          <p class="text-sm text-gray-600">First 10 rows of your import data</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="min-w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Row</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Invoice No</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Serial Number</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Manufacturer</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Model</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for row in rows_preview[:10] %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ loop.index }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ row.invoice_no or '-' }}</td>
+            <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ row.serial_number or '-' }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ row.manufacturer or '-' }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ row.model or '-' }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ row.category or '-' }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ row.location or '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if total > 10 %}
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100">
+      <p class="text-sm text-gray-600">
+        Showing first 10 rows of {{ total }} total rows
+      </p>
+    </div>
     {% endif %}
+  </div>
 
+  <!-- Action Buttons -->
+  <div class="flex items-center justify-between">
+    <a href="{{ url_for('assets.import_page') }}" 
+       class="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors">
+      <i class="fas fa-arrow-left"></i>
+      <span>Upload Different File</span>
+    </a>
+
+    <div class="flex items-center space-x-4">
+      {% if has_errors %}
+      <div class="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        Issues detected - you can continue but some data may be skipped
+      </div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('assets.import_commit') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" 
+                class="inline-flex items-center space-x-2 {{ 'bg-amber-600 hover:bg-amber-700' if has_errors else 'bg-green-600 hover:bg-green-700' }} text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
+          <i class="fas {{ 'fa-exclamation-triangle' if has_errors else 'fa-check' }}"></i>
+          <span>{{ 'Import Anyway' if has_errors else 'Import Data' }}</span>
+        </button>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}
